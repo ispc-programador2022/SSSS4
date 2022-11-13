@@ -68,19 +68,19 @@ for i in links_jobs:#Iteramos sobre los links de trabajos
     for j in i: #Iteramos sobre las listas de trabajos
         list_scrapper.append(j)
 
-#Función para manejar valores nulos
+# #Función para manejar valores nulos
+
+# def output_value1(arg1):
+#     if((s_job.find(arg1)) != None):
+#         return s_job.find(arg1).get_text(strip=True)
+#     else:
+#         return 'Sin valor'
+
 def output_value2(arg1, clase):
     if((s_job.find(arg1, clase)) != None):
         return s_job.find(arg1, clase).get_text(strip=True)
     else:
         return 'Sin valor'
-
-def output_value1(arg1):
-    if((s_job.find(arg1)) != None):
-        return s_job.find(arg1).get_text(strip=True)
-    else:
-        return 'Sin valor'
-
 
 # print(len(list_scrapper))
 #Verificamos un job en particular y creamos una sopa del mismo:
@@ -100,38 +100,41 @@ s_job = BeautifulSoup(r_job.text,'lxml')
 # print(f'Trabajo: {job} / Organizacion: {organization} / Lugar: {place} / Posteado hace: {posted_time_ago}/ Salario: {salary}')
 
 #Función para hacer scraper de cada trabajo y obtener los datos utiles:
-def scrapper_job(url):
+def scrapper_job(url,num):
+
     content_job = {}
     r=requests.get(url)
     s_job = BeautifulSoup(r.text,'lxml')
 
-    #Obtenemos: Titulo del trabajo, organización, lugar, posteado hace cuanto, salario:
-    job=s_job.find('h1').get_text(strip=True) #strip quita espacios al inicio y al final del str
-    # job=output_value1('h1') #strip quita espacios al inicio y al final del str
-    content_job['Trabajo'] = job
+    #Manejo de errores:
+    try:
+        #Obtenemos: Titulo del trabajo, organización, lugar, posteado hace cuanto, salario:
+        job=s_job.find('h1').get_text(strip=True) #strip quita espacios al inicio y al final del str
+        # job=output_value1('h1') #strip quita espacios al inicio y al final del str
+        content_job['Trabajo'] = job
 
-    organization=s_job.find('a', class_='topcard__org-name-link topcard__flavor--black-link').get_text(strip=True)
-    content_job['Organizacion'] = organization
-    
-    
-    place=s_job.find('span', class_='topcard__flavor topcard__flavor--bullet').get_text(strip=True)
-    content_job['Lugar'] = place
+        organization=s_job.find('a', class_='topcard__org-name-link topcard__flavor--black-link').get_text(strip=True)
+        content_job['Organizacion'] = organization
+        
+        
+        place=s_job.find('span', class_='topcard__flavor topcard__flavor--bullet').get_text(strip=True)
+        content_job['Lugar'] = place
 
-    posted_time_ago = s_job.find('span', class_='posted-time-ago__text topcard__flavor--metadata').get_text(strip=True)
-    # posted_time_ago = output_value2('span', 'posted-time-ago__text topcard__flavor--metadata')
-    content_job['Posteado hace'] = posted_time_ago
+        posted_time_ago = s_job.find('span', class_='posted-time-ago__text topcard__flavor--metadata').get_text(strip=True)
+        content_job['Posteado hace'] = posted_time_ago
 
-    salary = output_value2('a', 'app-aware-link')
-    content_job['Salario'] = salary
-
+        salary = output_value2('a', 'app-aware-link')
+        content_job['Salario'] = salary
+    except Exception as ex:
+        print(f'Error en la funcion scrapper - PAGINA Nº {num}: ' + str(ex))
     return content_job
 
-#Utilizamos la función para scrapear
-list_scrapper = list_scrapper[0:50]
+#Utilizamos la función para scrapear(Limitamos a 500 páginas)
+list_scrapper = list_scrapper[0:500]
 data_jobs = []
 for idx, i in enumerate(list_scrapper):
     print(f'estas escrapeando la pagina: {idx}')
-    data_jobs.append(scrapper_job(i))
+    data_jobs.append(scrapper_job(i,idx))
 
 #Creamos un dataframe
 df_jobs=pd.DataFrame(data_jobs)
