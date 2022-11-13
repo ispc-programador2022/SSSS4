@@ -1,4 +1,5 @@
-import requests 
+import requests
+import bs4
 from bs4 import BeautifulSoup
 #Nuevo immport para nuevo código con paginado
 import pandas
@@ -43,7 +44,8 @@ import csv
 
 #Luego creamos un comando para crear una estructura de archivo csv en el que completaremos nuestros datos scrapeados
 with open('Resultado_linkedin.csv', mode='w') as csv_file:
-    fieldnames = ['Title', 'Location', 'Salary', 'Date']
+    # fieldnames = ['Title', 'Location', 'Salary', 'Date']
+    fieldnames = ['Title']
     writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
     writer.writeheader()
 
@@ -56,35 +58,36 @@ job_date = []
 #Definimos la función para el scrapeo 
 def linkedin_scraper(webpage, page_number):
     next_page = webpage + str(page_number)
-    print(str(next_page))
     response = requests.get(str(next_page))
-    soup = BeautifulSoup(response.content,'lxml')
+    soup = BeautifulSoup(response.content,"html.parser")
 
-    soup_title= soup.findAll('h3', class_='base-search-card__title')
-    soup_location= soup.findAll("span",class_='job-search-card__location')
-    soup_salary= soup.findAll("span",class_='job-search-card__salary-info')
-    soup_date= soup.findAll("time",class_='job-search-card__listdate')
+    soup_title= soup.findAll("h3", {"class":"base-search-card__title"})
+    # soup_location= soup.findAll("span",{"class":"job-search-card__location"})
+    # soup_salary= soup.findAll("span",{"class":"job-search-card__salary-info"})
+    # soup_date= soup.findAll("time",{"class":"job-search-card__listdate"})
 
     for x in range(len(soup_title)):
-        job_title.append(soup_title[x].a.text.strip())
-        job_location.append(soup_location[x].text.strip())
-        job_salary.append(soup_salary[x].text.strip())
-        job_date.append(soup_date[x].text.strip())
+        job_title.append(soup_title[x].text.strip())
+        # job_location.append(soup_location[x].text.strip())
+        # job_salary.append(soup_salary[x].text.strip())
+        # job_date.append(soup_date[x].text.strip())
 
     #Generando la página siguiente en el URL
-    if page_number <20: 
+    if page_number <10: 
         page_number = page_number + 1
         linkedin_scraper(webpage, page_number)
 
 #Creamos una variable con la URL: 
-webLinkedinJobs = 'https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=Data%20Scientist/'
+#webLinkedinJobs = 'https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=Data%20Scientist/'
 #Llamando a la función con los parámetros iniciales:
-linkedin_scraper(webLinkedinJobs, 0)
+linkedin_scraper('https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords=Data%20Scientist/page/', 2)
  
 #crear el dataframe y llenar con estos datos el archivo csv
  
-data = { 'job_title':job_title, 'job_location': job_location, 'job_salary':job_salary, 'job_date':job_date}
+# data = { 'job_title':job_title, 'job_location': job_location, 'job_salary':job_salary, 'job_date':job_date}
+data = { 'job_title':job_title}
  
-df = DataFrame(data, columns = ['job_title','job_location','job_salary','job_date'])
+# df = DataFrame(data, columns = ['job_title','job_location','job_salary','job_date'])
+df = DataFrame(data, columns = ['job_title'])
  
-df.to_csv(r'D:\Documentos\ISPC_PI_TP2\SSSS4\linkedin_ds-jobs.csv')
+df.to_csv(r'C:\Users\Rodrigo\Desktop\linkedin_ds-jobs.csv')
